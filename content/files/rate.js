@@ -29,9 +29,6 @@ function loaddata() {
   script.type = 'text/javascript';
   script.src = 'https://rating.jenkins.io/rate/result.php';
   script.onload = function() { do_loaddata(); }
-  script.onreadystatechange = function() { // For IE
-    if (this.readyState=='loaded' || this.readyState=='complete') do_loaddata();
-  }
   document.getElementById('head').appendChild(script);
   return false;
 }
@@ -71,7 +68,7 @@ function do_loaddata() {
     let txt = '';
     const owner = document.createElement('div');
     owner.className = 'app-status-container'
-    div2 = document.createElement('DIV');
+    const div2 = document.createElement('DIV');
     div2.className = 'app-status-container__icons';
     txt = health('sunny',version,1, 'No major issues with this release', (information && information[0] ? information[0] + ' ' : '0 '))
         + health('cloudy',version,0, 'I experienced notable issues', (information && information[1] ? information[1] + ' ' : '0 '))
@@ -83,9 +80,9 @@ function do_loaddata() {
       const div3 = document.createElement('DIV');
       txt = '<span class="app-status-container__issues">Community reported issues: ';
       var issues = [];
-      for (j = 3; j < information.length; j += 2) {issues.push({id: information[j], count: information[j + 1]})}
+      for (let j = 3; j < information.length; j += 2) {issues.push({id: information[j], count: information[j + 1]})}
       issues.sort(function (a, b) {return b.count - a.count;});
-      for (j = 0; j < issues.length; j++) {
+      for (let j = 0; j < issues.length; j++) {
         if (!isNaN(parseInt(issues[j].id))) {
           txt += `${issues[j].count}&times;<a href="https://issue-redirect.jenkins.io/issue/${issues[j].id}">JENKINS-${issues[j].id}</a> `;
         } else {
@@ -115,11 +112,6 @@ function rate(version,rating) {
   script.src = 'https://rating.jenkins.io/rate/submit.php?version='
     + encodeURIComponent(version) + '&rating=' + rating + '&issue=' + encodeURIComponent(issue);
   script.onload = function() { alert('Thanks!'); location.reload(); }
-  script.onreadystatechange = function() { // For IE
-    if (this.readyState=='loaded' || this.readyState=='complete') {
-      alert('Thanks!'); location.reload();
-    }
-  }
   document.getElementById('head').appendChild(script);
 }
 

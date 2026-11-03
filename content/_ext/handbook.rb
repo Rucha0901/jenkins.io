@@ -76,55 +76,48 @@ module Awestruct
 
           chapter = Chapter.new
           chapter.key = c
-          chapter.page = pagemap[overview]
-          chapter.title = pagemap[overview].title
-          chapter.summary = pagemap[overview].summary
+          overview_page = pagemap[overview]
+          raise "Could not find page in pagemap for #{overview}" unless overview_page
+          chapter.page = overview_page
+          chapter.title = overview_page.title
+          chapter.summary = overview_page.summary
 
           if sections = yaml['sections']
             sections.each do |s|
               section = Section.new
               section.key = s
-              begin
-                full_section_path = File.join(dir, "#{s}.adoc")
-                unless File.exist?(full_section_path)
-                  raise "Could not find section file #{s}.adoc in #{dir}."
-                end
-                section.page = pagemap[full_section_path]
-                section.title = pagemap[full_section_path].title
-                section.summary = pagemap[full_section_path].summary
-                chapter.sections << section
-              rescue
-                full_section_path = File.join(dir, "#{s}", "index.adoc")
-                unless File.exist?(full_section_path)
-                  raise "Could not find subsection file #{s}/index.adoc in #{dir}."
-                end
-                section.page = pagemap[full_section_path]
-                section.title = pagemap[full_section_path].title
-                section.summary = pagemap[full_section_path].summary
-                chapter.sections << section
+              flat_path = File.join(dir, "#{s}.adoc")
+              dir_path  = File.join(dir, "#{s}", "index.adoc")
+              if File.exist?(flat_path)
+                full_section_path = flat_path
+              elsif File.exist?(dir_path)
+                full_section_path = dir_path
+              else
+                raise "Could not find section #{s} as #{flat_path} or #{dir_path}"
               end
-            end
-          end
 
-          if sections = yaml['sections']
-            sections.each do |s|
-              chapter.sections.each do |section|
-                if s == section.key
-                  subsection_file = File.join(dir, "#{s}", "_section.yml")
-                  if File.exist?(subsection_file)
-                    subsection_yaml = YAML.load(File.read(subsection_file))
-                    if subsections = subsection_yaml['subsections']
-                      subsections.each do |ss|
-                        subsection = Subsection.new
-                        subsection.key = ss
-                        full_subsection_path = File.join(dir, "#{s}", "#{ss}.adoc")
-                        subsection.page = pagemap[full_subsection_path]
-                        subsection.title = pagemap[full_subsection_path].title
-                        subsection.summary = pagemap[full_subsection_path].summary
-                        subsection.chapter = chapter
-                        section.subsections << subsection
-                      end
-                    end
+              section_page = pagemap[full_section_path]
+              raise "Could not find page in pagemap for #{full_section_path}" unless section_page
+              section.page = section_page
+              section.title = section_page.title
+              section.summary = section_page.summary
+              chapter.sections << section
+
+              subsection_file = File.join(dir, "#{s}", "_section.yml")
+              if File.exist?(subsection_file)
+                subsection_yaml = YAML.load(File.read(subsection_file))
+                if subsections = subsection_yaml['subsections']
+                  subsections.each do |ss|
+                    subsection = Subsection.new
+                    subsection.key = ss
+                    full_subsection_path = File.join(dir, "#{s}", "#{ss}.adoc")
+                    subsection_page = pagemap[full_subsection_path]
+                    raise "Could not find page in pagemap for #{full_subsection_path}" unless subsection_page
+                    subsection.page = subsection_page
+                    subsection.title = subsection_page.title
+                    subsection.summary = subsection_page.summary
+                    subsection.chapter = chapter
+                    section.subsections << subsection
                   end
                 end
               end
@@ -139,7 +132,9 @@ module Awestruct
               unless File.exist?(full_guide_path)
                 raise "Could not find guide file #{g}.adoc in #{dir}."
               end
-              guide.page = pagemap[full_guide_path]
+              guide_page = pagemap[full_guide_path]
+              raise "Could not find page in pagemap for #{full_guide_path}" unless guide_page
+              guide.page = guide_page
               chapter.guides << guide
               guide.chapter = chapter
               site[@name].guides << guide
